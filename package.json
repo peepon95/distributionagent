@@ -1,14 +1,28 @@
 {
-  "name": "distributionagent",
+  "name": "distributiongpt-web",
+  "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "web"
-  ],
   "scripts": {
-    "dev": "npm run dev --workspace web",
-    "build:web": "npm run build --workspace web",
-    "build": "npm run build:web && node scripts/sync_next_build.mjs",
-    "start": "npm run start --workspace web",
-    "lint": "npm run lint --workspace web"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "framer-motion": "^11.11.0",
+    "next": "14.2.21",
+    "openai": "^4.77.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.20",
+    "playwright-core": "^1.61.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
   }
 }
