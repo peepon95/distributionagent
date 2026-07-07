@@ -54,6 +54,8 @@ cp .env.example .env   # then fill in the values
 make ingest CHANNEL=@starterstory LIMIT=3   # smoke test: 3 videos
 make ingest CHANNEL=@starterstory           # full channel
 make ingest-all                             # both channels + the website
+make ingest-reddit LIMIT=5                  # founder/marketing subreddit posts
+make ingest-social FILE=examples/social_posts.csv
 make test                                   # unit tests
 ```
 
@@ -61,6 +63,10 @@ Raw episodes land in `data/raw/{channel}/{video_id}.json` as
 `{video_id, channel, title, url, published_at, duration, transcript: [{text, start}]}`.
 Website articles use the same shape (one segment, `start=0`) under
 `data/raw/social_growth_engineers/`.
+Curated social posts from X, Threads, TikTok, Instagram, LinkedIn, or other
+platforms can be imported from CSV/JSONL with columns like
+`platform,author,handle,url,published_at,title,content,metrics`; they land under
+`data/raw/founder_social_posts/`.
 
 Ingestion is idempotent: videos with an existing JSON file or an `episodes`
 row are skipped, so re-running only picks up new uploads. Videos without
@@ -79,6 +85,8 @@ make index                  # ~800-token chunks + embeddings -> chunks table + l
 make search Q="paywall optimization"   # hybrid search from the CLI
 make update                 # full channel scan -> ingest missing videos -> enrich -> index
 make update ARGS="--rss-only"           # faster latest-video check only
+make update ARGS="--limit-per-channel 20 --budget 10"
+make update ARGS="--include-reddit --reddit-limit 5 --budget 10"
 ```
 
 - Enrichment logs a cost estimate to RUN_LOG.md before spending; if the

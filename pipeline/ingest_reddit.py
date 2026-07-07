@@ -34,7 +34,17 @@ from pipeline.util import with_retries
 
 logger = logging.getLogger(__name__)
 
-SUBREDDITS = ["marketing", "appbusiness", "content_marketing", "socialmediamarketing"]
+SUBREDDITS = [
+    "marketing",
+    "appbusiness",
+    "content_marketing",
+    "socialmediamarketing",
+    "SaaS",
+    "startups",
+    "SideProject",
+    "EntrepreneurRideAlong",
+    "GrowthHacking",
+]
 LISTING_TIMEFRAMES = ("all", "year")
 USER_AGENT = "DistributionGPT/0.1 (research corpus)"
 REQUEST_DELAY_SECONDS = 2.5

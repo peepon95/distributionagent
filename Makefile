@@ -1,6 +1,6 @@
 PYTHON := .venv/bin/python
 
-.PHONY: setup ingest ingest-all ingest-reddit test enrich index update dev
+.PHONY: setup ingest ingest-all ingest-reddit ingest-social test enrich index update dev
 
 setup:
 	python3 -m venv .venv
@@ -20,6 +20,10 @@ ingest-all:
 ingest-reddit:
 	$(PYTHON) -m pipeline.ingest_reddit $(if $(LIMIT),--limit $(LIMIT))
 
+# Usage: make ingest-social FILE=examples/social_posts.csv
+ingest-social:
+	$(PYTHON) -m pipeline.ingest_social_posts $(FILE) $(if $(LIMIT),--limit $(LIMIT))
+
 test:
 	$(PYTHON) -m pytest tests/ -q
 
@@ -36,4 +40,4 @@ search:
 	$(PYTHON) -m pipeline.search "$(Q)"
 
 dev:
-	cd web && npm run dev
+	npm run dev

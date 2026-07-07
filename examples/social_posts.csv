@@ -1,0 +1,3 @@
+platform,author,handle,url,published_at,title,content,metrics
+x,Example Founder,@founder,https://x.com/founder/status/123,2026-01-01T00:00:00Z,Launch thread,"We are building in public: day 14, posting every feature demo and teardown.",120 likes
+threads,Example Builder,@builder,https://www.threads.net/@builder/post/abc,2026-01-02T00:00:00Z,Feature demo,"Short demo post about what shipped, what failed, and what users asked for.",34 replies

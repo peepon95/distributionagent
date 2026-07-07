@@ -197,6 +197,17 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="Maximum pending videos to ingest per channel in this run",
     )
+    parser.add_argument(
+        "--include-reddit",
+        action="store_true",
+        help="Also ingest founder/marketing subreddit posts before enrichment",
+    )
+    parser.add_argument(
+        "--reddit-limit",
+        type=int,
+        default=None,
+        help="Maximum new Reddit posts per subreddit when --include-reddit is set",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -222,6 +233,10 @@ def main(argv: list[str] | None = None) -> None:
     blocked_total = sum(result.blocked for result in results)
     if not args.skip_web:
         ingest_site()
+    if args.include_reddit:
+        from pipeline.ingest_reddit import ingest_all as ingest_reddit_all
+
+        ingest_reddit_all(limit=args.reddit_limit)
 
     mode = "RSS" if args.rss_only else "full uploads scan"
     log(
