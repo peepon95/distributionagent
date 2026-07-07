@@ -60,6 +60,31 @@ async function classify(
   }
 }
 
+/** The corpus is heavily skewed toward one channel, so raw top-k retrieval is
+ *  almost all that channel. Cap how many chunks any single channel contributes
+ *  to the front of the list (keeping rank order within and across channels),
+ *  then append the overflow so nothing is lost. Lets Starter Story / Superwall
+ *  surface when they're relevant instead of being crowded out. */
+function diversifyByChannel(
+  chunks: RetrievedChunk[],
+  maxPerChannel: number,
+  k: number,
+): RetrievedChunk[] {
+  const perChannel = new Map<string, number>();
+  const front: RetrievedChunk[] = [];
+  const overflow: RetrievedChunk[] = [];
+  for (const chunk of chunks) {
+    const count = perChannel.get(chunk.channel) ?? 0;
+    if (count < maxPerChannel) {
+      perChannel.set(chunk.channel, count + 1);
+      front.push(chunk);
+    } else {
+      overflow.push(chunk);
+    }
+  }
+  return [...front, ...overflow].slice(0, k);
+}
+
 async function retrieve(
   question: string,
   mode: Mode,
@@ -67,21 +92,26 @@ async function retrieve(
   competitors: string[],
 ): Promise<RetrievedChunk[]> {
   if (mode === "broad") {
-    const summaries = await search(question, { k: 10, summariesOnly: true });
-    // young corpus may have few summary chunks; top up with transcript chunks
-    return summaries.length >= 4
-      ? summaries
-      : [...summaries, ...(await search(question, { k: 10 - summaries.length }))];
+    // Pull a wider candidate pool, then rebalance across channels down to 10.
+    const summaries = await search(question, { k: 20, summariesOnly: true });
+    const pool =
+      summaries.length >= 4
+        ? summaries
+        : [...summaries, ...(await search(question, { k: 20 - summaries.length }))];
+    return diversifyByChannel(pool, 4, 10);
   }
   if (mode === "specific") {
+    // An app-filtered search is intentionally narrow — leave it as-is.
     const filtered = app ? await search(question, { k: 10, app }) : [];
-    return filtered.length > 0 ? filtered : search(question, { k: 10 });
+    if (filtered.length > 0) return filtered;
+    return diversifyByChannel(await search(question, { k: 20 }), 4, 10);
   }
-  // my_app: fan the question out across the user's competitors
-  return search(question, {
-    k: 10,
+  // my_app: fan the question out across the user's competitors, then rebalance.
+  const fanned = await search(question, {
+    k: 20,
     extraQueries: competitors.slice(0, 4).map((c) => `${question} ${c}`),
   });
+  return diversifyByChannel(fanned, 4, 10);
 }
 
 function buildSystemPrompt(
@@ -107,7 +137,7 @@ THE USER'S APP (frame advice for it):
 RULES:
 1. Ground every claim in the excerpts. If the excerpts don't cover the question, say so plainly — never invent facts, numbers, or episodes.
 2. Cite as you go, using EXACTLY this format: [Episode Title — Channel @ mm:ss]. Use the labels provided with each excerpt verbatim. Cite at least once per distinct claim.
-3. Prefer concrete tactics, numbers, and mechanisms over generalities.
+3. Prefer concrete tactics, numbers, and mechanisms over generalities. When several excerpts from different episodes or channels are relevant, draw on that range rather than leaning on a single source.
 4. When the question is about growing the user's own app (or advice clearly applies), end with a short section titled "What this means for ${profile.app_name}" — 2-4 bullet points translating the findings to their app and audience.
 5. Keep answers tight: short paragraphs, bullets where natural, no filler.
 

@@ -56,6 +56,7 @@ make ingest CHANNEL=@starterstory           # full channel
 make ingest-all                             # both channels + the website
 make ingest-reddit LIMIT=5                  # founder/marketing subreddit posts
 make ingest-social FILE=examples/social_posts.csv
+make ingest-social FILE=examples/founder_social_posts.jsonl   # curated X build-in-public posts
 make test                                   # unit tests
 ```
 
@@ -66,7 +67,15 @@ Website articles use the same shape (one segment, `start=0`) under
 Curated social posts from X, Threads, TikTok, Instagram, LinkedIn, or other
 platforms can be imported from CSV/JSONL with columns like
 `platform,author,handle,url,published_at,title,content,metrics`; they land under
-`data/raw/founder_social_posts/`.
+`data/raw/founder_social_posts/`. `examples/founder_social_posts.jsonl` is a
+starter batch of build-in-public posts (revenue/user milestones and channel
+tactics from Blake Anderson, Tibo, Greg Isenberg); it was assembled by
+`examples/build_founder_posts.py`, which scrapes the founders' public X feeds via
+Firecrawl + nitter and keeps only distribution-relevant posts. To add more
+founders, append rows to that JSONL (or the `POSTS` list) and re-run
+`make ingest-social FILE=examples/founder_social_posts.jsonl`. These platforms are
+auth-gated with no free API, so this curated-import path is deliberate; a live
+scraper would need a `FIRECRAWL_API_KEY` in `.env`.
 
 Ingestion is idempotent: videos with an existing JSON file or an `episodes`
 row are skipped, so re-running only picks up new uploads. Videos without
@@ -123,4 +132,11 @@ Edit "My App Profile" in the sidebar (persists to `profile.json`) so every
 answer is framed for your app. Questions are classified by gpt-5-mini
 (broad / specific / advice-for-my-app), retrieval is hybrid, and gpt-4o streams
 answers with `[Episode Title — Channel @ mm:ss]` citations that deep-link to
-the YouTube timestamp. Cited episodes collect in the sidebar Source Tray.
+the YouTube timestamp (or the source post/article for non-YouTube channels).
+
+The Source Tray shows exactly the episodes the answer **cites**, parsed from the
+citation labels in the streamed text — so the cards always match the blue
+citation pills. Because the corpus is skewed toward one channel, retrieval caps
+how many chunks any single channel contributes to the front of the candidate
+list, letting Starter Story / Superwall / Reddit / founder posts surface instead
+of being crowded out.

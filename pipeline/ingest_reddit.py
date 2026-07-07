@@ -42,6 +42,7 @@ SUBREDDITS = [
     "SaaS",
     "startups",
     "SideProject",
+    "Entrepreneur",
     "EntrepreneurRideAlong",
     "GrowthHacking",
 ]

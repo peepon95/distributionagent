@@ -10,6 +10,28 @@ import type { Conversation, Message, Source } from "@/components/types";
 
 const STORAGE_KEY = "distributiongpt.conversations.v1";
 
+// Matches the citation labels the answer model emits: [Title — Channel @ mm:ss].
+const CITATION_RE = /\[([^\[\]]+?) — [^\[\]]+? @ \d+:\d{2}\]/g;
+
+/** The Source Tray should show exactly the episodes the answer cited, in the
+ *  order they first appear — not the whole retrieval set. Falls back to the
+ *  retrieved sources only while the answer has not cited anything yet. */
+function citedSources(content: string, sources: Source[]): Source[] {
+  const out: Source[] = [];
+  const seen = new Set<string>();
+  const re = new RegExp(CITATION_RE.source, "g");
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(content)) !== null) {
+    const title = match[1].trim().toLowerCase();
+    const source = sources.find((s) => s.title.toLowerCase() === title);
+    if (source && !seen.has(source.video_id)) {
+      seen.add(source.video_id);
+      out.push(source);
+    }
+  }
+  return out;
+}
+
 function newConversation(): Conversation {
   return { id: crypto.randomUUID(), title: "New chat", messages: [], updatedAt: Date.now() };
 }
@@ -55,8 +77,13 @@ export default function Page() {
   }, []);
 
   const active = conversations.find((c) => c.id === activeId) ?? null;
-  const lastSources: Source[] =
-    active?.messages.filter((m) => m.sources?.length).at(-1)?.sources ?? [];
+  const lastAnswer = active?.messages
+    .filter((m) => m.role === "assistant" && m.content)
+    .at(-1);
+  const cited = lastAnswer ? citedSources(lastAnswer.content, lastAnswer.sources ?? []) : [];
+  // While streaming, before the first citation lands, show what was retrieved
+  // so the tray isn't empty; once citations exist it narrows to just those.
+  const lastSources: Source[] = cited.length ? cited : lastAnswer?.sources ?? [];
   const inConversation =
     active?.messages.some((m) => m.role === "assistant") ?? false;
 

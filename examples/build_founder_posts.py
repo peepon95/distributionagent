@@ -1,0 +1,188 @@
+"""Build a JSONL of curated founder build-in-public posts, then hand it to
+pipeline.ingest_social_posts.
+
+The posts were scraped from the founders' public X feeds (via nitter) and
+filtered to distribution/growth-relevant, substantive content — revenue and
+user milestones, channel tactics, and build-in-public stories. URLs point at
+the canonical x.com status so citations link to the real post.
+
+Re-run safe: ingestion is idempotent (keyed on the post URL).
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from pipeline.ingest_social_posts import ingest_file
+
+OUT = Path(__file__).resolve().parent / "founder_social_posts.jsonl"
+
+POSTS: list[dict[str, str]] = [
+    # ---- Blake Anderson (@blakeandersonw) — Cal AI / RIZZ / 10x ----
+    {
+        "platform": "x",
+        "author": "Blake Anderson",
+        "handle": "@blakeandersonw",
+        "url": "https://x.com/blakeandersonw/status/2072345607461626205",
+        "published_at": "2026-07-01",
+        "title": "Blake Anderson: monthly revenue ramp Jan–June",
+        "metrics": "113 likes, 19 retweets",
+        "content": (
+            "$3.2k - January\n$3.9k - February\n$7.0k - March\n$28.7k - April\n"
+            "$118.5k - May\n$195.4k - June"
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Blake Anderson",
+        "handle": "@blakeandersonw",
+        "url": "https://x.com/blakeandersonw/status/2072347412497076676",
+        "published_at": "2026-07-01",
+        "title": "Blake Anderson: 100k DAUs, bigger than Cal AI",
+        "metrics": "78 retweets",
+        "content": (
+            "Over 100k DAUs already too. This app will likely be multiple times "
+            "bigger than Cal AI \U0001f91d"
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Blake Anderson",
+        "handle": "@blakeandersonw",
+        "url": "https://x.com/blakeandersonw/status/2062543179618890162",
+        "published_at": "2026-06-04",
+        "title": "Blake Anderson: 500k MAU / 80k DAU / $2.4m ARR, 50% MoM",
+        "metrics": "30 likes, 10 retweets",
+        "content": (
+            "Hiring a founding engineer for an app with 500k mau, 80k dau. "
+            "Targeting 1m dau by end of year.\n\n$2.4m ARR, 50% MoM growth.\n\n"
+            "Must have experience building consumer web + mobile apps, ai agent "
+            "frontend + backend, and world-class product sense."
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Blake Anderson",
+        "handle": "@blakeandersonw",
+        "url": "https://x.com/blakeandersonw/status/2059268714965434433",
+        "published_at": "2026-05-26",
+        "title": "Blake Anderson: everyone is on their own timeline",
+        "metrics": "39 likes, 26 retweets",
+        "content": (
+            "I drove DoorDash 40+ hours a week during the summer until I was 22 "
+            "years old so I could work on my businesses in my free time.\n\n"
+            "I often felt behind the rest of my peers — I had never even had an "
+            "internship.\n\nDon’t compare. Everybody is on their own timeline \U0001f64f"
+        ),
+    },
+    # ---- Tibo (@tibo_maker) — Revid, Outrank; sold Tweet Hunter/Taplio ----
+    {
+        "platform": "x",
+        "author": "Tibo",
+        "handle": "@tibo_maker",
+        "url": "https://x.com/tibo_maker/status/2030954308326273489",
+        "published_at": "2026-03-09",
+        "title": "Tibo: crossed $1,000,000/month after $8m exit",
+        "metrics": "430 likes, 41 retweets",
+        "content": (
+            "yes, I crossed $1,000,000 / month\n\nwas trying to keep it quiet but "
+            "it got leaked on a pod so... let's go\n\nquick backstory:\n\n"
+            "I sold Tweet Hunter and Taplio for $8m in 2024\nthen got back to work\n\n"
+            "and honestly, I was terrified\n\nwhen you set a standard for yourself, "
+            "you have to live by it and that pressure is real\n\nevery single thing "
+            "I shipped felt scary - I felt like a fraud, \"the lucky guy who got "
+            "acquired once\"\n\nso I forced myself to ship a ton\na lot failed\n"
+            "I was embarrassed by the bugs in my MVPs\nbut I kept going\n\n"
+            "Revid, Outrank, SuperX, PostSyncer, Feather -> five products thriving"
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Tibo",
+        "handle": "@tibo_maker",
+        "url": "https://x.com/tibo_maker/status/2072302458584330667",
+        "published_at": "2026-07-01",
+        "title": "Tibo: SEO alone made me over $1M; unlinked mentions",
+        "metrics": "51 likes, 4 retweets",
+        "content": (
+            "SEO alone has made me over $1M\n\nand I can't say it enough, it's not "
+            "dead\n\nthe brands winning in SEO + AI search today aren't just the ones "
+            "with better content or the most backlinks (still matters, don't skip "
+            "it)\nthey're the ones with unlinked mentions"
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Tibo",
+        "handle": "@tibo_maker",
+        "url": "https://x.com/tibo_maker/status/2072976181222138162",
+        "published_at": "2026-07-03",
+        "title": "Tibo: user got $149,615 in backlink value via Outrank",
+        "metrics": "45 likes, 7 retweets",
+        "content": (
+            "this user gets about $10,000 in backlinks value per month, which cost "
+            "$1k/m on Outrank\nin total, he got $149,615 in backlinks value \U0001f92f"
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Tibo",
+        "handle": "@tibo_maker",
+        "url": "https://x.com/tibo_maker/status/2074040846727454803",
+        "published_at": "2026-07-06",
+        "title": "Tibo: paying users $100 to roast Editor v2 for feedback",
+        "metrics": "142 likes, 4 retweets",
+        "content": (
+            "I’ll give you $100 to roast my product\n\nwe just rebuilt the entire "
+            "Revid editor from scratch (Editor v2)\n\nso here's the deal:\n\nreply "
+            "\"V2\" below\nI add 2,000 credits ($100) to your account\nyou try Editor "
+            "v2 and tell me everything that sucks — brutal feedback > polite feedback"
+        ),
+    },
+    {
+        "platform": "x",
+        "author": "Tibo",
+        "handle": "@tibo_maker",
+        "url": "https://x.com/tibo_maker/status/2074063346983125486",
+        "published_at": "2026-07-06",
+        "title": "Tibo: joined a stealth project at $1k MRR, now $5k/mo",
+        "metrics": "61 likes, 3 retweets",
+        "content": (
+            "there this new stealth project that I joined at $1k MRR that's now "
+            "doing more than $5k / month\nmaybe another hit coming \U0001f440"
+        ),
+    },
+    # ---- Greg Isenberg (@gregisenberg) — Late Checkout / Startup Ideas ----
+    {
+        "platform": "x",
+        "author": "Greg Isenberg",
+        "handle": "@gregisenberg",
+        "url": "https://x.com/gregisenberg/status/1845255860559257671",
+        "published_at": "2024-10-13",
+        "title": "Greg Isenberg: content strategy = free ideas + growth playbooks",
+        "metrics": "648 likes, 337 retweets",
+        "content": (
+            "my entire content strategy is this\n\ngive you free startup ideas + "
+            "growth playbooks that work\n\ni won't hold back\n\nand every time you "
+            "build something from my tweets/pod I'm sippin' a martini & cheering "
+            "you on\n\nyour success is my ultimate flex\n\nnow go ship something & "
+            "make me proud"
+        ),
+    },
+]
+
+
+def main() -> None:
+    with OUT.open("w", encoding="utf-8") as f:
+        for post in POSTS:
+            f.write(json.dumps(post, ensure_ascii=False) + "\n")
+    print(f"Wrote {len(POSTS)} posts to {OUT}")
+    ingest_file(OUT, channel="founder_social_posts")
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    main()

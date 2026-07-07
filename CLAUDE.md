@@ -13,9 +13,10 @@ chat with the corpus to get distribution advice with episode citations.
 - **Backend/pipeline:** Python 3.11+, scripts in `/pipeline`
 - **Database:** Supabase (Postgres + pgvector) — tables: `episodes`, `chunks`, `entities`
 - **Embeddings:** OpenAI text-embedding-3-small (1536 dims)
-- **LLM:** Anthropic API — claude-haiku for enrichment, claude-sonnet for chat answers
+- **LLM:** OpenAI API — gpt-5-mini for enrichment and question classification,
+  gpt-4o for chat answers
 - **Frontend:** Next.js 14 (App Router) + Tailwind + Framer Motion, in `/web`
-- **Env vars** in `.env` (never hardcode keys): ANTHROPIC_API_KEY, OPENAI_API_KEY,
+- **Env vars** in `.env` (never hardcode keys): OPENAI_API_KEY,
   SUPABASE_URL, SUPABASE_SERVICE_KEY, YOUTUBE_API_KEY
 
 ## Data model
