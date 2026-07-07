@@ -11,6 +11,13 @@ export interface AppProfile {
 }
 
 const PROFILE_PATH = resolve(PROJECT_ROOT, "profile.json");
+const DEFAULT_PROFILE: AppProfile = {
+  app_name: "SnapShare",
+  one_liner: "Qr code photo sharing app for events",
+  category: "consumer mobile app",
+  target_audience: "weddings, friends, party",
+  competitors: ["PovCamera", "Once"],
+};
 
 declare global {
   var __distributiongpt_profile: AppProfile | undefined;
@@ -20,7 +27,12 @@ export function readProfile(): AppProfile {
   if (globalThis.__distributiongpt_profile) {
     return globalThis.__distributiongpt_profile;
   }
-  const profile = JSON.parse(readFileSync(PROFILE_PATH, "utf8")) as AppProfile;
+  let profile = DEFAULT_PROFILE;
+  try {
+    profile = JSON.parse(readFileSync(PROFILE_PATH, "utf8")) as AppProfile;
+  } catch {
+    // Vercel's server bundle may not include mutable project-root files.
+  }
   globalThis.__distributiongpt_profile = profile;
   return profile;
 }
