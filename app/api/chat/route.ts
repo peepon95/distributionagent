@@ -15,6 +15,13 @@ interface ChatMessage {
   content: string;
 }
 
+function jsonError(error: string, status = 500) {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 function mmss(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -110,42 +117,51 @@ ${excerpts}`;
 
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: "OPENAI_API_KEY not configured in .env" }),
-      { status: 500 },
-    );
-  }
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const { messages } = (await request.json()) as { messages: ChatMessage[] };
-  const question = messages.filter((m) => m.role === "user").at(-1)?.content;
-  if (!question) {
-    return new Response(JSON.stringify({ error: "no user message" }), { status: 400 });
+    return jsonError("OPENAI_API_KEY is not configured in Vercel environment variables");
   }
 
-  const profile = readProfile();
+  let messages: ChatMessage[];
+  try {
+    const body = (await request.json()) as { messages: ChatMessage[] };
+    messages = body.messages;
+  } catch {
+    return jsonError("invalid request body", 400);
+  }
+
+  const question = messages?.filter((m) => m.role === "user").at(-1)?.content;
+  if (!question) return jsonError("no user message", 400);
+
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  let profile: ReturnType<typeof readProfile>;
+  try {
+    profile = readProfile();
+  } catch (err) {
+    return jsonError(`Profile failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   const { mode, app } = await classify(client, question);
 
   let chunks: RetrievedChunk[] = [];
   try {
     chunks = await retrieve(question, mode, app, profile.competitors);
   } catch (err) {
-    return new Response(
-      JSON.stringify({
-        error: `Retrieval failed: ${err instanceof Error ? err.message : err}`,
-      }),
-      { status: 500 },
-    );
+    return jsonError(`Retrieval failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  const stream = await client.chat.completions.create({
-    model: ANSWER_MODEL,
-    stream: true,
-    temperature: 0.4,
-    messages: [
-      { role: "system", content: buildSystemPrompt(profile, chunks) },
-      ...messages.slice(-8),
-    ],
-  });
+  let stream: Awaited<ReturnType<typeof client.chat.completions.create>>;
+  try {
+    stream = await client.chat.completions.create({
+      model: ANSWER_MODEL,
+      stream: true,
+      temperature: 0.4,
+      messages: [
+        { role: "system", content: buildSystemPrompt(profile, chunks) },
+        ...messages.slice(-8),
+      ],
+    });
+  } catch (err) {
+    return jsonError(`Answer generation failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   const encoder = new TextEncoder();
   const sources = dedupeSources(chunks);
