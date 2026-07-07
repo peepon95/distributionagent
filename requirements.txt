@@ -1,0 +1,9 @@
+requests>=2.32
+python-dotenv>=1.0
+youtube-transcript-api>=1.0
+trafilatura>=1.12
+supabase>=2.6
+pytest>=8.0
+openai>=1.50
+tiktoken>=0.8
+numpy>=2.0

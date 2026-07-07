@@ -1,0 +1,26 @@
+You are a research analyst for a growth/distribution knowledge base. Below is a
+transcript (or transcript window) of an episode about startup growth, apps, and
+distribution tactics.
+
+Episode title: {title}
+Channel: {channel}
+
+Extract the following as a STRICT JSON object with exactly these keys:
+
+{{
+  "summary": "4-6 sentence summary of THIS content, focused on growth and distribution: who is featured, what they built, how they grew it, and the key distribution lessons.",
+  "apps_mentioned": [{{"name": "...", "category": "...", "what_was_discussed": "one sentence"}}],
+  "founders": ["Full Name", "..."],
+  "tactics": [{{"tactic": "...", "channel": "one of: TikTok / Instagram / YouTube / ASO / paywall / referral / SEO / paid ads / influencer / community / email / PR / other", "one_line_takeaway": "..."}}],
+  "metrics": [{{"app": "...", "metric": "...", "value": "...", "context": "e.g. $50k MRR via TikTok UGC"}}]
+}}
+
+Rules:
+- Only include apps, founders, tactics, and metrics actually mentioned in the transcript.
+- Use canonical app names (e.g. "Cal AI", not "the calorie app").
+- Every metric needs a concrete value (number, $ amount, %, or count). Skip vague ones.
+- If a list has no items, return it as [].
+- Output ONLY the JSON object, no markdown fences, no commentary.
+
+Transcript:
+{transcript}

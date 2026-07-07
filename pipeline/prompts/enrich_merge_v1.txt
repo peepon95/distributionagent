@@ -1,0 +1,26 @@
+You are merging partial extractions from consecutive windows of ONE long episode
+transcript into a single result.
+
+Episode title: {title}
+Channel: {channel}
+
+Below are {n} partial JSON extractions, in transcript order. Merge them into ONE
+JSON object with the same schema:
+
+{{
+  "summary": "4-6 sentences covering the WHOLE episode, focused on growth and distribution.",
+  "apps_mentioned": [{{"name": "...", "category": "...", "what_was_discussed": "..."}}],
+  "founders": ["..."],
+  "tactics": [{{"tactic": "...", "channel": "...", "one_line_takeaway": "..."}}],
+  "metrics": [{{"app": "...", "metric": "...", "value": "...", "context": "..."}}]
+}}
+
+Rules:
+- Deduplicate: the same app/founder/tactic/metric mentioned in several windows
+  appears ONCE, keeping the most specific description.
+- Canonicalize name variants ("CalAI" and "Cal AI" are the same app).
+- Write a fresh overall summary; do not concatenate the window summaries.
+- Output ONLY the JSON object.
+
+Partial extractions:
+{partials}
